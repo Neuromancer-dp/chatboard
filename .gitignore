@@ -1,0 +1,4 @@
+node_modules/
+humanchat.db
+public/uploads/*
+!public/uploads/.gitkeep

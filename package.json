@@ -1,0 +1,18 @@
+{
+  "name": "humanchat",
+  "version": "1.0.0",
+  "description": "Local Element/Telegram-style chat app backed by Ollama personas",
+  "main": "server.js",
+  "type": "commonjs",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "engines": {
+    "node": ">=22.5.0"
+  },
+  "dependencies": {
+    "@lenml/char-card-reader": "^1.1.1",
+    "express": "^4.19.2",
+    "multer": "^2.0.0"
+  }
+}
