@@ -1,4 +1,6 @@
 node_modules/
-humanchat.db
+chatboard.db
+chatboard.db-wal
+chatboard.db-shm
 public/uploads/*
 !public/uploads/.gitkeep

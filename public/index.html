@@ -2,164 +2,427 @@
 <html lang="en">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>humanchat</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="color-scheme" content="light dark" />
+  <title>Chatboard</title>
+  <link rel="icon" href="icon.svg" type="image/svg+xml" />
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
+  <div id="bg-layer"></div>
   <div id="app">
+    <!-- ================= Sidebar ================= -->
     <aside id="sidebar">
       <div id="sidebar-header">
-        <h1>humanchat</h1>
-        <button id="add-contact-btn" class="icon-btn" title="Add contact">+</button>
+        <div class="brand"><i data-icon="chat" data-size="20"></i><span>Chatboard</span></div>
+        <button id="new-btn" class="icon-btn" title="New chat"><i data-icon="compose"></i></button>
       </div>
-      <div id="contact-list"></div>
-
+      <div id="sidebar-search">
+        <i data-icon="search" data-size="16"></i>
+        <input id="chat-search" type="search" placeholder="Search chats  (Ctrl+K)" autocomplete="off" />
+      </div>
+      <div id="chat-list" role="list"></div>
       <div id="sidebar-footer">
-        <button id="settings-btn" class="icon-btn" title="Settings">
-          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 15a3 3 0 100-6 3 3 0 000 6z"/><path d="M19.4 13.5a1.7 1.7 0 00.34 1.87l.06.06a2 2 0 11-2.83 2.83l-.06-.06a1.7 1.7 0 00-1.87-.34 1.7 1.7 0 00-1.04 1.56V19.6a2 2 0 11-4 0v-.09a1.7 1.7 0 00-1.11-1.56 1.7 1.7 0 00-1.87.34l-.06.06a2 2 0 11-2.83-2.83l.06-.06a1.7 1.7 0 00.34-1.87 1.7 1.7 0 00-1.56-1.04H2.4a2 2 0 110-4h.09A1.7 1.7 0 004.05 8.5a1.7 1.7 0 00-.34-1.87l-.06-.06a2 2 0 112.83-2.83l.06.06a1.7 1.7 0 001.87.34H8.5a1.7 1.7 0 001.04-1.56V2.4a2 2 0 114 0v.09a1.7 1.7 0 001.04 1.56 1.7 1.7 0 001.87-.34l.06-.06a2 2 0 112.83 2.83l-.06.06a1.7 1.7 0 00-.34 1.87V8.5a1.7 1.7 0 001.56 1.04h.09a2 2 0 110 4h-.09a1.7 1.7 0 00-1.56 1.04z"/></svg>
+        <button id="profile-btn" class="profile-chip" title="Your profile">
+          <div id="me-avatar" class="avatar"></div>
+          <div class="profile-text">
+            <div id="me-name">You</div>
+            <div id="ollama-status"><span class="dot"></span><span class="label">checking…</span></div>
+          </div>
         </button>
+        <button id="settings-btn" class="icon-btn" title="Settings"><i data-icon="settings"></i></button>
       </div>
     </aside>
 
+    <!-- ================= Main ================= -->
     <main id="main-panel">
-      <div id="empty-state">
-        <p>Select a contact to start chatting</p>
-      </div>
+      <div id="empty-state"></div>
 
-      <div id="chat-view" hidden>
+      <section id="chat-view" hidden>
         <header id="chat-header">
-          <div id="chat-avatar" class="avatar"></div>
-          <div id="chat-info">
-            <div id="chat-name"></div>
-            <div id="chat-status">online</div>
+          <button id="back-btn" class="icon-btn mobile-only" title="Back"><i data-icon="back"></i></button>
+          <button id="chat-title" class="chat-title" title="Chat info">
+            <div id="chat-avatar" class="avatar"></div>
+            <div class="chat-title-text">
+              <div id="chat-name"></div>
+              <div id="chat-status"></div>
+            </div>
+          </button>
+          <div class="header-actions">
+            <button id="nudge-btn" class="icon-btn" title="Nudge"><i data-icon="sparkle"></i></button>
+            <button id="search-btn" class="icon-btn" title="Search in chat"><i data-icon="search"></i></button>
+            <button id="chat-menu-btn" class="icon-btn" title="More"><i data-icon="more"></i></button>
           </div>
         </header>
 
-        <div id="messages"></div>
-
-        <div id="input-row">
-          <button id="plus-btn" class="icon-btn" title="More" disabled>+</button>
-          <input id="message-input" type="text" placeholder="Message" autocomplete="off" />
-          <button id="send-btn" class="icon-btn" title="Send">
-            <svg viewBox="0 0 24 24" width="20" height="20"><path d="M2 21l21-9L2 3v7l15 2-15 2z" fill="currentColor"/></svg>
-          </button>
+        <div id="search-bar" hidden>
+          <i data-icon="search" data-size="16"></i>
+          <input id="search-input" type="search" placeholder="Search messages" autocomplete="off" />
+          <span id="search-count"></span>
+          <button id="search-prev" class="icon-btn sm" title="Previous"><i data-icon="up" data-size="18"></i></button>
+          <button id="search-next" class="icon-btn sm" title="Next"><i data-icon="down" data-size="18"></i></button>
+          <button id="search-close" class="icon-btn sm" title="Close"><i data-icon="x" data-size="18"></i></button>
         </div>
-      </div>
+
+        <div id="messages-wrap">
+          <div id="wallpaper-layer"></div>
+          <div id="messages" aria-live="polite"></div>
+          <button id="jump-btn" class="jump-btn" hidden title="Jump to latest">
+            <i data-icon="down"></i><span id="jump-count" hidden></span>
+          </button>
+          <div id="drop-hint" hidden><i data-icon="image" data-size="32"></i><span>Drop files to send</span></div>
+        </div>
+
+        <footer id="composer">
+          <div id="reply-bar" class="composer-strip" hidden>
+            <div class="strip-accent"></div>
+            <div class="strip-text">
+              <div id="reply-to-name"></div>
+              <div id="reply-to-text"></div>
+            </div>
+            <button id="reply-cancel" class="icon-btn sm" title="Cancel reply"><i data-icon="x" data-size="18"></i></button>
+          </div>
+          <div id="attach-bar" class="attach-list" hidden></div>
+          <div class="composer-row">
+            <button id="attach-btn" class="icon-btn" title="Attach photos, PDFs, documents"><i data-icon="clip"></i></button>
+            <input id="attach-file" type="file" multiple hidden accept="image/png,image/jpeg,image/gif,image/webp,.pdf,.docx,.txt,.md,.markdown,.csv,.tsv,.json,.log,.yaml,.yml,.toml,.ini,.xml,.py,.js,.mjs,.ts,.tsx,.jsx,.java,.kt,.c,.h,.cpp,.hpp,.cs,.go,.rs,.rb,.php,.swift,.sh,.sql,.css,.scss,.lua,.r,.tex,.srt" />
+            <div class="input-shell">
+              <textarea id="message-input" rows="1" placeholder="Message" autocomplete="off"></textarea>
+              <button id="emoji-btn" class="icon-btn sm" title="Emoji"><i data-icon="smile"></i></button>
+            </div>
+            <button id="send-btn" class="send-btn" title="Send"><i data-icon="send" data-size="20"></i></button>
+            <button id="stop-btn" class="send-btn stop" title="Stop replying" hidden><i data-icon="stop" data-size="16"></i></button>
+          </div>
+        </footer>
+      </section>
     </main>
   </div>
 
-  <div id="edit-overlay" hidden>
-    <div id="edit-card">
-      <button id="edit-close" class="icon-btn" title="Close">&times;</button>
-      <h2 id="edit-title">Edit contact</h2>
+  <!-- ================= Contact editor ================= -->
+  <div id="contact-modal" class="overlay" hidden>
+    <div class="modal modal-lg">
+      <button class="icon-btn modal-close" data-close title="Close"><i data-icon="x"></i></button>
+      <h2 id="contact-title" class="modal-title">New contact</h2>
 
-      <div id="edit-mode-toggle" class="segmented" hidden>
-        <button type="button" class="segmented-btn" data-mode="manual">Create manually</button>
-        <button type="button" class="segmented-btn" data-mode="import">Import Character Card</button>
+      <div id="contact-templates" class="template-strip" hidden></div>
+
+      <div id="card-drop" class="drop-zone" hidden>
+        <i data-icon="card" data-size="26"></i>
+        <span id="card-drop-text">Drop a character card PNG, or click to browse</span>
+        <input id="card-file" type="file" accept="image/png,image/webp,image/jpeg" hidden />
       </div>
 
-      <div id="card-import-drop" class="wallpaper-drop" hidden>
-        <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M4 16l4.5-6 3.5 4.5 2.5-3L20 16M4 4h16v16H4z"/></svg>
-        <span id="card-import-text">drop a character card PNG or click to browse</span>
-      </div>
-      <input id="card-import-file" type="file" accept="image/png,image/jpeg,image/webp" hidden />
-      <div id="card-import-error" class="edit-error" hidden></div>
+      <div id="contact-form">
+        <div class="profile-head">
+          <div class="avatar-edit">
+            <div id="contact-avatar" class="avatar"></div>
+            <button id="contact-avatar-btn" class="camera-btn" title="Change photo"><i data-icon="camera" data-size="15"></i></button>
+            <input id="contact-avatar-file" type="file" accept="image/*" hidden />
+          </div>
+          <div class="profile-head-fields">
+            <input id="contact-name" type="text" class="input input-lg" placeholder="Name" maxlength="80" />
+            <input id="contact-about" type="text" class="input" placeholder="Bio (optional)" maxlength="500" />
+            <button id="contact-avatar-clear" class="link-btn" hidden>Remove photo</button>
+          </div>
+        </div>
+        <div id="contact-presets" class="avatar-presets" title="Pick a profile picture"></div>
 
-      <div id="edit-fields">
-        <div id="edit-avatar-wrap">
-          <div id="edit-avatar-preview" class="avatar"></div>
-          <button id="edit-avatar-btn" class="camera-btn" title="Change photo">
-            <svg viewBox="0 0 24 24" width="16" height="16"><path d="M9 3l-1.8 2H4c-1.1 0-2 .9-2 2v11c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2h-3.2L15 3H9zm3 15c-2.8 0-5-2.2-5-5s2.2-5 5-5 5 2.2 5 5-2.2 5-5 5zm0-8c-1.7 0-3 1.3-3 3s1.3 3 3 3 3-1.3 3-3-1.3-3-3-3z" fill="currentColor"/></svg>
-          </button>
-          <input id="edit-avatar-file" type="file" accept="image/*" hidden />
+        <div class="tabs" id="contact-tabs">
+          <button class="tab active" data-tab="persona">Personality</button>
+          <button class="tab" data-tab="look">Look</button>
+          <button class="tab" data-tab="advanced">Advanced</button>
         </div>
 
-        <label for="edit-name">Name</label>
-        <input id="edit-name" type="text" placeholder="Contact name" />
+        <div class="tab-panel" data-panel="persona">
+          <label class="field-label" for="contact-model">Model</label>
+          <select id="contact-model" class="input"></select>
 
-        <label for="edit-model">Model</label>
-        <select id="edit-model"></select>
+          <label class="field-label">How they talk</label>
+          <div id="contact-style" class="segmented">
+            <button type="button" data-value="texting">Texting</button>
+            <button type="button" data-value="roleplay">Roleplay</button>
+            <button type="button" data-value="raw">Custom only</button>
+          </div>
+          <div id="contact-style-hint" class="hint"></div>
 
-        <label for="edit-persona-prompt">Custom instructions</label>
-        <textarea id="edit-persona-prompt" placeholder="Sent as system context with every message to this contact"></textarea>
+          <label class="field-label">Reply length</label>
+          <div id="contact-length" class="segmented">
+            <button type="button" data-value="short">Short</button>
+            <button type="button" data-value="normal">Normal</button>
+            <button type="button" data-value="long">Long</button>
+          </div>
 
-        <div id="edit-error" class="edit-error" hidden></div>
+          <label class="field-label">Texts you first</label>
+          <div id="contact-initiative" class="segmented">
+            <button type="button" data-value="off">Never</button>
+            <button type="button" data-value="sometimes">Sometimes</button>
+            <button type="button" data-value="often">Often</button>
+          </div>
+          <div class="hint">They'll check in or share something when it's been quiet for a while. Never during your quiet hours.</div>
 
-        <button id="edit-save">Save</button>
+          <label class="field-label" for="contact-persona">Who are they?</label>
+          <textarea id="contact-persona" class="input" rows="5" placeholder="Age, job, personality, how you know each other, quirks… e.g. &quot;Sam is my best friend from school, 24, sarcastic but sweet, obsessed with cats.&quot;"></textarea>
+
+          <div id="first-message-wrap">
+            <label class="field-label" for="contact-first">First message (optional)</label>
+            <textarea id="contact-first" class="input" rows="2" placeholder="What they open the chat with"></textarea>
+          </div>
+        </div>
+
+        <div class="tab-panel" data-panel="look" hidden>
+          <label class="field-label">Color</label>
+          <div id="contact-colors" class="swatches"></div>
+          <label class="field-label" for="contact-status">Status line</label>
+          <input id="contact-status" type="text" class="input" placeholder="e.g. at the gym  (shown under their name)" maxlength="120" />
+        </div>
+
+        <div class="tab-panel" data-panel="advanced" hidden>
+          <label class="field-label" for="contact-temp">Creativity <span id="contact-temp-val" class="muted"></span></label>
+          <input id="contact-temp" type="range" min="0" max="1.5" step="0.05" />
+          <div class="hint">Lower is steadier and more predictable. Higher is more surprising (and more likely to go off the rails on small models).</div>
+
+          <label class="field-label"><i data-icon="brain" data-size="14"></i> Things they remember</label>
+          <div id="contact-facts" class="fact-list"></div>
+          <div class="hint">Facts picked up from your chats; the relevant ones come back to them when they matter. Add your own or delete wrong ones.</div>
+
+          <label class="field-label" for="contact-memory">Recent conversation notes</label>
+          <textarea id="contact-memory" class="input" rows="4" placeholder="Nothing yet. Notes are written automatically after a conversation goes quiet."></textarea>
+        </div>
+
+        <div id="contact-error" class="form-error" hidden></div>
+
+        <div class="modal-actions">
+          <button id="contact-delete" class="btn btn-danger-ghost" hidden>Delete contact</button>
+          <span class="spacer"></span>
+          <button class="btn" data-close>Cancel</button>
+          <button id="contact-save" class="btn btn-primary">Save</button>
+        </div>
       </div>
     </div>
   </div>
 
-  <div id="settings-overlay" hidden>
-    <div id="settings-card">
-      <button id="settings-close" class="icon-btn" title="Close">&times;</button>
-      <h2>Settings</h2>
+  <!-- ================= Group editor ================= -->
+  <div id="group-modal" class="overlay" hidden>
+    <div class="modal modal-lg">
+      <button class="icon-btn modal-close" data-close title="Close"><i data-icon="x"></i></button>
+      <h2 id="group-title" class="modal-title">New group</h2>
 
-      <div class="settings-section">
-        <div class="settings-section-title">Dark mode</div>
-        <div id="dark-mode-toggle" class="segmented">
-          <button type="button" class="segmented-btn" data-value="system">System</button>
-          <button type="button" class="segmented-btn" data-value="light">Light</button>
-          <button type="button" class="segmented-btn" data-value="dark">Dark</button>
+      <div class="profile-head">
+        <div class="avatar-edit">
+          <div id="group-avatar" class="avatar"></div>
+          <button id="group-avatar-btn" class="camera-btn" title="Change photo"><i data-icon="camera" data-size="15"></i></button>
+          <input id="group-avatar-file" type="file" accept="image/*" hidden />
+        </div>
+        <div class="profile-head-fields">
+          <input id="group-name" type="text" class="input input-lg" placeholder="Group name" maxlength="80" />
+          <input id="group-description" type="text" class="input" placeholder="Description (optional)" maxlength="500" />
         </div>
       </div>
+      <div id="group-presets" class="avatar-presets"></div>
 
-      <div class="settings-section">
-        <div class="settings-section-title">Theme</div>
-        <div class="settings-section-hint">Named full themes — pick one.</div>
-        <div id="theme-grid" class="theme-grid">
-          <div class="theme-tile" data-theme="default">
-            <div class="theme-preview preview-default"><div class="bar"></div><div class="block"></div><div class="block" style="width:70%"></div></div>
-            <div class="theme-name">default</div>
-          </div>
-          <div class="theme-tile" data-theme="paper">
-            <div class="theme-preview preview-paper"><div class="bar"></div><div class="block"></div><div class="block" style="width:70%"></div></div>
-            <div class="theme-name">paper</div>
-          </div>
-          <div class="theme-tile" data-theme="glass">
-            <div class="theme-preview preview-glass"><div class="bar"></div><div class="block"></div><div class="block" style="width:70%"></div></div>
-            <div class="theme-name">glass</div>
-          </div>
-          <div class="theme-tile" data-theme="whatsapp">
-            <div class="theme-preview preview-whatsapp"><div class="bar"></div><div class="block"></div><div class="block" style="width:70%"></div></div>
-            <div class="theme-name">whatsapp</div>
-          </div>
-          <div class="theme-tile" data-theme="discord">
-            <div class="theme-preview preview-discord"><div class="bar"></div><div class="block"></div><div class="block" style="width:70%"></div></div>
-            <div class="theme-name">discord</div>
-          </div>
-          <div class="theme-tile" data-theme="dracula">
-            <div class="theme-preview preview-dracula"><div class="bar"></div><div class="block"></div><div class="block" style="width:70%"></div></div>
-            <div class="theme-name">dracula</div>
-          </div>
-          <div class="theme-tile" data-theme="synthwave">
-            <div class="theme-preview preview-synthwave"><div class="bar"></div><div class="block"></div><div class="block" style="width:70%"></div></div>
-            <div class="theme-name">synthwave</div>
-          </div>
-        </div>
+      <label class="field-label">Members <span id="group-count" class="muted"></span></label>
+      <div id="group-members" class="member-picker"></div>
+
+      <label class="field-label" for="group-instructions">Scenario / vibe (optional)</label>
+      <textarea id="group-instructions" class="input" rows="3" placeholder="e.g. Old uni friends planning a road trip. Keep it chaotic and teasing."></textarea>
+
+      <div id="group-memory-wrap">
+        <label class="field-label"><i data-icon="brain" data-size="14"></i> Things the group remembers</label>
+        <div id="group-facts" class="fact-list"></div>
+        <label class="field-label" for="group-memory">Recent conversation notes</label>
+        <textarea id="group-memory" class="input" rows="3" placeholder="Nothing yet."></textarea>
       </div>
 
-      <div class="settings-section" id="wallpaper-section" hidden>
-        <div class="settings-section-title">Wallpaper</div>
-        <div class="settings-section-hint">Sits behind the glass theme's translucent panels.</div>
-        <div id="wallpaper-drop" class="wallpaper-drop">
-          <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M4 16l4.5-6 3.5 4.5 2.5-3L20 16M4 4h16v16H4z"/></svg>
-          <span id="wallpaper-drop-text">drop an image or click to browse</span>
-        </div>
-        <input id="wallpaper-file" type="file" accept="image/*" hidden />
-      </div>
+      <div class="hint">Tip: @mention someone (or use their name) to get them to answer. @everyone pings the whole group.</div>
+      <div id="group-error" class="form-error" hidden></div>
 
-      <div class="settings-section">
-        <div class="settings-section-title">Connection</div>
-        <div class="settings-section-hint">Local Ollama server URL.</div>
-        <input id="ollama-url-input" type="text" placeholder="http://127.0.0.1:11434" />
-        <div id="settings-error" class="edit-error" hidden></div>
-        <button id="ollama-url-save">Save</button>
+      <div class="modal-actions">
+        <button id="group-delete" class="btn btn-danger-ghost" hidden>Delete group</button>
+        <span class="spacer"></span>
+        <button class="btn" data-close>Cancel</button>
+        <button id="group-save" class="btn btn-primary">Create group</button>
       </div>
     </div>
   </div>
 
-  <script src="app.js"></script>
+  <!-- ================= Settings ================= -->
+  <div id="settings-modal" class="overlay" hidden>
+    <div class="modal modal-settings">
+      <nav class="settings-nav">
+        <h2 class="modal-title">Settings</h2>
+        <button class="settings-tab active" data-tab="profile"><i data-icon="user" data-size="17"></i>Profile</button>
+        <button class="settings-tab" data-tab="appearance"><i data-icon="palette" data-size="17"></i>Appearance</button>
+        <button class="settings-tab" data-tab="chats"><i data-icon="chat" data-size="17"></i>Chats</button>
+        <button class="settings-tab" data-tab="models"><i data-icon="cpu" data-size="17"></i>Models</button>
+        <button class="settings-tab" data-tab="web"><i data-icon="globe" data-size="17"></i>Web</button>
+        <button class="settings-tab" data-tab="data"><i data-icon="database" data-size="17"></i>Data</button>
+      </nav>
+      <div class="settings-body">
+        <button class="icon-btn modal-close" data-close title="Close"><i data-icon="x"></i></button>
+
+        <section class="settings-panel" data-panel="profile">
+          <h3>Your profile</h3>
+          <p class="hint">Your contacts know this about you.</p>
+          <div class="profile-head">
+            <div class="avatar-edit">
+              <div id="set-user-avatar" class="avatar"></div>
+              <button id="set-user-avatar-btn" class="camera-btn" title="Change photo"><i data-icon="camera" data-size="15"></i></button>
+              <input id="set-user-avatar-file" type="file" accept="image/*" hidden />
+            </div>
+            <div class="profile-head-fields">
+              <input id="set-user-name" data-setting="user_name" type="text" class="input input-lg" placeholder="Your name" maxlength="60" />
+              <button id="set-user-avatar-clear" class="link-btn">Remove photo</button>
+            </div>
+          </div>
+          <div id="user-presets" class="avatar-presets"></div>
+          <label class="field-label" for="set-user-about">About you</label>
+          <textarea id="set-user-about" data-setting="user_about" class="input" rows="4" placeholder="e.g. 22, final-year design student in Mumbai, loves football and bad horror movies."></textarea>
+        </section>
+
+        <section class="settings-panel" data-panel="appearance" hidden>
+          <h3>Appearance</h3>
+          <label class="field-label">Mode</label>
+          <div id="set-dark-mode" class="segmented" data-setting-seg="dark_mode">
+            <button type="button" data-value="system">System</button>
+            <button type="button" data-value="light">Light</button>
+            <button type="button" data-value="dark">Dark</button>
+          </div>
+
+          <label class="field-label">Theme</label>
+          <div id="theme-grid" class="theme-grid"></div>
+
+          <label class="field-label">Accent color</label>
+          <div id="accent-swatches" class="swatches"></div>
+
+          <label class="field-label">Bubbles</label>
+          <div class="segmented" data-setting-seg="bubble_style">
+            <button type="button" data-value="round">Round</button>
+            <button type="button" data-value="classic">Tails</button>
+            <button type="button" data-value="flat">Flat</button>
+          </div>
+
+          <label class="field-label">Density</label>
+          <div class="segmented" data-setting-seg="density">
+            <button type="button" data-value="comfy">Comfortable</button>
+            <button type="button" data-value="compact">Compact</button>
+          </div>
+
+          <label class="field-label" for="set-font-size">Text size <span id="font-size-val" class="muted"></span></label>
+          <input id="set-font-size" type="range" min="12" max="19" step="1" />
+
+          <label class="field-label">Chat wallpaper</label>
+          <div class="wallpaper-row">
+            <div id="wallpaper-preview" class="wallpaper-preview"></div>
+            <div class="wallpaper-actions">
+              <button id="wallpaper-upload" class="btn"><i data-icon="image" data-size="16"></i> Choose image</button>
+              <button id="wallpaper-clear" class="btn btn-ghost">Remove</button>
+              <input id="wallpaper-file" type="file" accept="image/*" hidden />
+            </div>
+          </div>
+          <label class="field-label" for="set-wallpaper-dim">Wallpaper dim <span id="dim-val" class="muted"></span></label>
+          <input id="set-wallpaper-dim" type="range" min="0" max="90" step="5" />
+          <label class="field-label" for="set-wallpaper-blur">Wallpaper blur <span id="blur-val" class="muted"></span></label>
+          <input id="set-wallpaper-blur" type="range" min="0" max="30" step="1" />
+          <div class="hint">Applies to whatever background is set, including the Glass theme's wallpaper.</div>
+        </section>
+
+        <section class="settings-panel" data-panel="chats" hidden>
+          <h3>Chats</h3>
+          <label class="switch-row"><span>Enter sends message <small>Shift+Enter for a new line</small></span><input type="checkbox" data-setting-toggle="enter_to_send" /><span class="switch"></span></label>
+          <label class="switch-row"><span>Show message times</span><input type="checkbox" data-setting-toggle="show_timestamps" /><span class="switch"></span></label>
+          <label class="switch-row"><span>Sound for new messages</span><input type="checkbox" data-setting-toggle="sounds" /><span class="switch"></span></label>
+
+          <label class="switch-row"><span>Desktop notifications <small>When a message arrives and Chatboard isn't in front</small></span><input type="checkbox" id="set-notifications" data-setting-toggle="notifications" /><span class="switch"></span></label>
+          <label class="switch-row"><span>Contacts can text you first <small>Set how often per contact (Never / Sometimes / Often)</small></span><input type="checkbox" data-setting-toggle="checkins_enabled" /><span class="switch"></span></label>
+
+          <label class="field-label">Quiet hours <span class="muted">· nobody texts first, reminders still arrive</span></label>
+          <div class="input-row time-row">
+            <input type="time" data-setting="quiet_start" class="input" />
+            <span class="muted">to</span>
+            <input type="time" data-setting="quiet_end" class="input" />
+          </div>
+
+          <label class="field-label" for="set-global">Instructions for everyone</label>
+          <textarea id="set-global" data-setting="global_instructions" class="input" rows="4" placeholder="Applied to every contact, e.g. &quot;Text in British English.&quot; or &quot;Never use emojis.&quot;"></textarea>
+          <div class="hint">Every contact already gets built-in instructions to text like a real person (short, casual, no AI-speak). Pick “Custom only” in a contact's settings to turn that off for them.</div>
+        </section>
+
+        <section class="settings-panel" data-panel="models" hidden>
+          <h3>Models</h3>
+          <label class="field-label" for="set-ollama-url">Ollama server</label>
+          <div class="input-row">
+            <input id="set-ollama-url" type="text" class="input" placeholder="http://127.0.0.1:11434" />
+            <button id="ollama-test" class="btn">Save &amp; test</button>
+          </div>
+          <div id="ollama-test-result" class="hint"></div>
+
+          <label class="field-label" for="set-default-model">Default model for new contacts</label>
+          <select id="set-default-model" class="input"></select>
+
+          <label class="switch-row"><span>Keep only one model in memory <small>Unloads other models before a reply. Saves RAM; switching between contacts on different models gets slower.</small></span><input type="checkbox" data-setting-toggle="single_model" /><span class="switch"></span></label>
+
+          <label class="field-label" for="set-embed">Memory model</label>
+          <input id="set-embed" data-setting="embed_model" type="text" class="input" placeholder="nomic-embed-text" />
+          <div id="embed-status" class="hint"></div>
+
+          <label class="field-label" for="set-context">Context window</label>
+          <select id="set-context" data-setting="context_size" class="input">
+            <option value="2048">2,048 tokens (low memory)</option>
+            <option value="4096">4,096 tokens (recommended)</option>
+            <option value="8192">8,192 tokens</option>
+            <option value="16384">16,384 tokens</option>
+            <option value="32768">32,768 tokens (needs lots of RAM)</option>
+          </select>
+          <div class="hint" id="context-hint">How much the model can read at once: chat history plus any PDFs or documents you send. Bigger means better recall and longer documents, but slower replies and more RAM. With 4,096, roughly the first 3-4 pages of a PDF fit.</div>
+        </section>
+
+        <section class="settings-panel" data-panel="web" hidden>
+          <h3>Web</h3>
+          <p class="hint">Type <code>/search something</code> in any chat and the contact looks it up and answers. Searches and opened links are the only things that leave your machine.</p>
+          <label class="field-label" for="set-search-provider">Search with</label>
+          <select id="set-search-provider" data-setting="search_provider" class="input">
+            <option value="duckduckgo">DuckDuckGo (no setup)</option>
+            <option value="searxng">SearXNG (self-hosted)</option>
+          </select>
+          <div id="searxng-wrap">
+            <label class="field-label" for="set-searxng">SearXNG address</label>
+            <input id="set-searxng" data-setting="searxng_url" type="text" class="input" placeholder="http://127.0.0.1:8888" />
+            <div class="hint">Needs <code>json</code> enabled under <code>search.formats</code> in its settings.yml.</div>
+          </div>
+          <label class="switch-row"><span>Read links you send <small>Contacts open pasted links and react to what's on the page</small></span><input type="checkbox" data-setting-toggle="read_links" /><span class="switch"></span></label>
+        </section>
+
+        <section class="settings-panel" data-panel="data" hidden>
+          <h3>Data</h3>
+          <p class="hint">Everything is stored locally in a SQLite file next to the app. Nothing leaves your machine except requests to your Ollama server.</p>
+          <a class="btn" href="/api/export" download><i data-icon="download" data-size="16"></i> Export everything (JSON)</a>
+        </section>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= Reminders ================= -->
+  <div id="reminders-modal" class="overlay" hidden>
+    <div class="modal">
+      <button class="icon-btn modal-close" data-close title="Close"><i data-icon="x"></i></button>
+      <h2 class="modal-title">Reminders</h2>
+      <p class="hint" style="margin-top:-8px">Or just ask in the chat: “remind me to call mom at 6”.</p>
+      <div id="reminder-list" class="reminder-list"></div>
+      <label class="field-label" for="reminder-text">New reminder</label>
+      <input id="reminder-text" type="text" class="input" placeholder="What about?" maxlength="300" />
+      <div class="input-row" style="margin-top:8px">
+        <input id="reminder-when" type="datetime-local" class="input" />
+        <button id="reminder-add" class="btn btn-primary">Add</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= Image viewer ================= -->
+  <div id="lightbox" class="overlay" hidden>
+    <button class="icon-btn modal-close light" data-close title="Close"><i data-icon="x"></i></button>
+    <img id="lightbox-img" alt="" />
+  </div>
+
+  <script type="module" src="js/app.js"></script>
 </body>
 </html>

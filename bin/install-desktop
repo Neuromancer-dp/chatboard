@@ -1,0 +1,40 @@
+#!/usr/bin/env bash
+# Build the Chatboard desktop app (Tauri) and add it to your app launcher.
+# Re-run after pulling updates to the desktop/ folder.
+set -euo pipefail
+
+DIR="$(cd "$(dirname "$(readlink -f "$0")")/.." && pwd)"
+NODE="$(command -v node)"
+BIN="$HOME/.local/bin/chatboard-desktop"
+APPS="$HOME/.local/share/applications"
+ICONS="$HOME/.local/share/icons/hicolor"
+
+echo "Building (the first build takes a few minutes)…"
+cd "$DIR/desktop"
+CHATBOARD_DIR="$DIR" CHATBOARD_NODE="$NODE" cargo build --release
+
+install -Dm755 target/release/chatboard-desktop "$BIN"
+install -Dm644 icons/32x32.png "$ICONS/32x32/apps/chatboard.png"
+install -Dm644 icons/128x128.png "$ICONS/128x128/apps/chatboard.png"
+install -Dm644 icons/128x128@2x.png "$ICONS/256x256/apps/chatboard.png"
+install -Dm644 icons/icon.png "$ICONS/512x512/apps/chatboard.png"
+install -Dm644 icons/icon.svg "$ICONS/scalable/apps/chatboard.svg"
+
+mkdir -p "$APPS"
+cat >"$APPS/chatboard.desktop" <<EOF
+[Desktop Entry]
+Type=Application
+Name=Chatboard
+Comment=Text your local AI friends
+Exec=$BIN
+Icon=chatboard
+Terminal=false
+Categories=Network;Chat;InstantMessaging;
+StartupWMClass=chatboard-desktop
+EOF
+
+update-desktop-database "$APPS" >/dev/null 2>&1 || true
+gtk-update-icon-cache -q "$ICONS" >/dev/null 2>&1 || true
+
+echo "Installed. Open Chatboard from your app menu, or type: cb"
+echo "Start it in the tray at login: cb autostart on"

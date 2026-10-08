@@ -2,29 +2,76 @@
 
 Local messenger for local models.
 
-Chatboard (the running app still calls itself **humanchat**) is a desktop-style chat UI for [Ollama](https://ollama.com). Each contact is its own persona: its own model, prompt, avatar, thread, and rolling memory. Nothing leaves your machine except traffic to `127.0.0.1:11434`.
-
-Looks like Element / Telegram. Behaves like a phone book of models.
+Chatboard is a desktop-style chat app for [Ollama](https://ollama.com). Every contact is a persona with its own model, personality, picture, memory and chat thread, and you can put several of them in a group chat. Nothing leaves your machine except requests to your Ollama server.
 
 ![Chatboard](screenshot.png)
 
 ## Features
 
-- Two-pane desktop layout: contact list + thread
-- One Ollama model per contact (`ollama list` is the dropdown)
-- Streaming replies
-- Per-contact system / persona prompt
-- Automatic memory: after a thread goes idle (or the tab closes), the contact’s own model writes a short note and keeps the last few summaries
-- SillyTavern-style character card import (PNG / Character Card V2–V3)
-- Avatar + wallpaper uploads
-- SQLite persistence (contacts + messages)
-- Theme / dark mode / custom Ollama URL in settings
+**Chatting**
+- Contacts text like actual friends: short, casual, multiple texts in a row, no assistant-speak. Built-in instructions are tuned for small 3-4B models.
+- Group chats. Members talk to you *and to each other*. @mention (or just name) someone to get them to answer; `@everyone` pings all.
+- **Nudge** button: a contact double-texts, or a group keeps talking without you.
+- Streaming replies with typing indicators. Stop button. Regenerate the last reply.
+- Replies keep generating if you reload or close the tab. They show up when you're back.
+- Reply to (quote) messages, emoji reactions (double-click for ❤️), edit, delete, copy.
+- Attach photos, PDFs, Word (.docx), text and code files (drag & drop, paste, or 📎). Document text is extracted and given to the model; photos go to vision models.
+- Search inside a chat, unread badges, pinned and muted chats, drafts per chat, sounds.
+- **Contacts text you first**: check-ins and little updates when it's been quiet (per contact: never / sometimes / often), never during your quiet hours, and never twice in a row without a reply.
+- **Reminders**: "remind me to call mom at 6" and that contact texts you at 6. Manage them from the chat menu.
+- **/search**: `/search weather in Mumbai` and the contact looks it up (DuckDuckGo or your own SearXNG) and answers in their own words, with sources. Pasted links get read too.
+- Everyone knows the current time and how long it's been since you last talked.
+- **Long-term memory**: facts are pulled out of your chats ("Ani has an interview at Google on Friday") and the relevant ones come back when they matter, matched by meaning with a small embedding model. View, add or delete them per contact. Plus short rolling conversation notes.
+- Desktop notifications and sounds.
+
+**Contacts**
+- Starter personas (best friend, sibling, study buddy, roommate, mentor, night owl, game master).
+- 21 built-in profile pictures, or upload your own.
+- Styles: **Texting** (default), **Roleplay** (in-character, *actions*), or **Custom only** (your prompt, no built-in rules).
+- Reply length, creativity (temperature), color, bio, status line.
+- SillyTavern character card import (PNG, Character Card V2/V3).
+
+**Customisation**
+- 9 themes (Default, WhatsApp, Discord, Midnight, Paper, Sakura, Glass, Dracula, Synthwave) with light/dark/system modes.
+- Custom accent color, bubble style (round / tails / flat), density, text size.
+- Chat wallpaper with dim and blur sliders.
+- Your profile (name, picture, "about you") is shared with your contacts.
+- Instructions for everyone (e.g. "text in British English").
+
+**Models**
+- Any model from `ollama list`. Vision-capable models are labelled.
+- "Keep only one model in memory" (on by default) unloads other models before a reply, so a laptop never holds several at once.
+- Adjustable context window. Reasoning models' `<think>` blocks are hidden.
+
+## Desktop app
+
+Chatboard can run in its own window (built with [Tauri](https://tauri.app)) with a tray icon. Closing the window keeps it running in the tray, so contacts can still text you and reminders still arrive. Quit from the tray menu.
+
+```bash
+bin/install-desktop      # builds it (needs Rust + webkit2gtk) and adds it to your app menu
+cb autostart on          # optional: start in the tray when you log in
+```
+
+## The `cb` command
+
+```bash
+alias cb='~/chatboard/bin/cb'   # in ~/.zshrc or ~/.bashrc
+```
+
+| Command | Does |
+|---|---|
+| `cb` | open Chatboard (desktop app if installed, otherwise a browser tab) |
+| `cb web` | open it in your browser |
+| `cb stop` / `cb restart` | stop / restart the server |
+| `cb log` | follow the server log (`~/.cache/chatboard.log`) |
+| `cb autostart on\|off` | start in the tray at login |
 
 ## Requirements
 
 - Node.js **≥ 22.5**
 - [Ollama](https://ollama.com) running locally (default `http://127.0.0.1:11434`)
-- At least one pulled model, e.g. `ollama pull gemma3:4b`
+- At least one model, e.g. `ollama pull gemma3:4b` (that one also understands images)
+- For long-term memory: `ollama pull nomic-embed-text` (about 270 MB; without it, memory falls back to keyword matching)
 
 ## Setup
 
@@ -37,44 +84,59 @@ npm start
 
 Open [http://127.0.0.1:3210](http://127.0.0.1:3210).
 
-Override the port with `PORT=4000 npm start`.
-Point at a different Ollama host in the in-app settings if you need to.
+- `PORT=4000 npm start` changes the port.
+- The server only listens on `127.0.0.1`. Set `HOST=0.0.0.0` to reach it from other devices on your network (no authentication, so only do this on a network you trust).
+- `CHATBOARD_DB=/path/to/file.db` uses a different database file.
 
-## Use
 
-1. Start Ollama.
-2. Hit **+** in the sidebar → name, model, optional avatar.
-3. Or drop a character-card PNG; name, persona, first message, and art are filled from the card.
-4. Chat. Replies stream. History is stored per contact.
-5. Click the header to edit name / model / prompt / avatar.
+## Tips for small models
 
-Memory is automatic. You don’t edit it in v1. Closing the tab fires a summarize via `sendBeacon`; ~15–20 minutes idle on a thread does the same. Older notes get folded so the field doesn’t eat the context window.
+- Keep contacts on **Texting** with **Short** replies. That's where 3-4B models sound most human.
+- A concrete persona works better than adjectives: age, job, how you know each other, a couple of quirks.
+- Long PDFs only partly fit in a 4,096-token context (about 3-4 pages). Raise it in Settings → Models if you have the RAM.
+- If a contact keeps going off the rails, lower their creativity in the Advanced tab.
 
 ## Stack
 
-| Piece     | Choice                                      |
-|-----------|---------------------------------------------|
-| Server    | Node + Express                              |
-| DB        | SQLite (`db.js`)                            |
-| Frontend  | Plain HTML/CSS/JS in `public/` — no bundler |
-| Uploads   | multer → `public/uploads/`                  |
-| Models    | Ollama `/api/tags` + `/api/chat` (streamed) |
-| Cards     | `@lenml/char-card-reader`                   |
+| Piece     | Choice                                                    |
+|-----------|-----------------------------------------------------------|
+| Server    | Node + Express                                            |
+| DB        | SQLite via `node:sqlite` (`db.js`)                        |
+| Engine    | `engine.js` (context, bursts, group turns, memory), `prompts.js` |
+| Frontend  | Plain HTML/CSS/JS modules in `public/`, no bundler        |
+| Files     | multer → `public/uploads/`, text via `pdfjs-dist` and `mammoth` |
+| Background | `scheduler.js` (reminders, check-ins, idle memory), `turns.js` (replies + SSE events) |
+| Memory    | `memory.js`: facts + embeddings (`/api/embed`), cosine recall |
+| Web       | `web.js`: DuckDuckGo HTML / SearXNG JSON, readable-text page fetch |
+| Reminders | `reminders.js` with `chrono-node` |
+| Desktop   | `desktop/`: Tauri 2 (window, tray, notifications, single instance) |
+| Models    | Ollama `/api/chat` (streamed), `/api/tags`, `/api/show`, `/api/ps` |
+| Cards     | `@lenml/char-card-reader`                                 |
 
 ## API (local)
 
-| Method     | Path                           | Purpose                         |
-|------------|--------------------------------|---------------------------------|
-| GET/POST   | `/api/contacts`                | list / create                   |
-| PUT/DELETE | `/api/contacts/:id`            | edit / delete                   |
-| GET/POST   | `/api/contacts/:id/messages`   | history / send (streamed text)  |
-| POST       | `/api/contacts/:id/summarize`  | kick memory update              |
-| GET        | `/api/models`                  | proxy of Ollama tags            |
-| GET/PATCH  | `/api/settings`                | theme, wallpaper, ollama_url    |
-| POST       | `/api/upload/avatar`           | image                           |
-| POST       | `/api/upload/wallpaper`        | image                           |
-| POST       | `/api/cards/parse`             | character card PNG              |
-
-## Not in v1
-
-Group chats, multiple threads per contact, manual memory editor, mobile layout.
+| Method          | Path                              | Purpose                                   |
+|-----------------|-----------------------------------|-------------------------------------------|
+| GET/POST        | `/api/contacts`                   | list / create                             |
+| PUT/DELETE      | `/api/contacts/:id`               | edit / delete                             |
+| GET/POST        | `/api/chats`                      | list chats / create group                 |
+| GET/PUT/DELETE  | `/api/chats/:id`                  | chat info / edit (pin, mute, group) / delete group |
+| GET/POST        | `/api/chats/:id/messages`         | history (`?before=&limit=`) / send (NDJSON event stream) |
+| POST            | `/api/chats/:id/continue`         | nudge / let the group keep talking        |
+| POST            | `/api/chats/:id/regenerate`       | redo the last reply                       |
+| POST            | `/api/chats/:id/stop`             | stop generating                           |
+| POST            | `/api/chats/:id/read`, `/clear`, `/summarize` | mark read / clear / update memory |
+| GET             | `/api/chats/:id/search?q=`        | search messages                           |
+| GET             | `/api/chats/:id/export?format=txt\|json` | export a chat                      |
+| PUT/DELETE      | `/api/messages/:id`               | edit / delete a message                   |
+| POST            | `/api/messages/:id/react`         | toggle a reaction                         |
+| POST            | `/api/upload/file`                | attachment (image, pdf, docx, text)       |
+| POST            | `/api/upload/avatar`, `/wallpaper`| images                                    |
+| POST            | `/api/cards/parse`                | character card PNG                        |
+| GET             | `/api/models`, `/api/status`      | Ollama models (with vision flag) / health |
+| GET/PATCH       | `/api/settings`                   | all preferences                           |
+| GET             | `/api/events`                     | server-sent events (background replies)  |
+| GET/POST/DELETE | `/api/reminders`, `/api/reminders/:id` | reminders                           |
+| GET/POST        | `/api/contacts/:id/memories`, `/api/chats/:id/memories` | long-term memory facts |
+| DELETE          | `/api/memories/:id`               | forget a fact                             |
+| GET             | `/api/export`                     | full JSON backup                          |

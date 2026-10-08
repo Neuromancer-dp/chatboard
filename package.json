@@ -1,7 +1,7 @@
 {
-  "name": "humanchat",
-  "version": "1.0.0",
-  "description": "Local Element/Telegram-style chat app backed by Ollama personas",
+  "name": "chatboard",
+  "version": "2.0.0",
+  "description": "Local messenger for your Ollama models: friends, group chats, files, themes",
   "main": "server.js",
   "type": "commonjs",
   "scripts": {
@@ -12,7 +12,10 @@
   },
   "dependencies": {
     "@lenml/char-card-reader": "^1.1.1",
+    "chrono-node": "^2.10.2",
     "express": "^4.19.2",
-    "multer": "^2.0.0"
+    "mammoth": "^1.13.0",
+    "multer": "^2.0.0",
+    "pdfjs-dist": "^6.4.299"
   }
 }

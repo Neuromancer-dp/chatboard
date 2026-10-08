@@ -1,0 +1,68 @@
+#!/usr/bin/env bash
+# Chatboard launcher.
+#   cb                 open Chatboard (desktop app if installed, else a browser tab)
+#   cb web             open it in your browser instead
+#   cb stop            stop the server (and quit the desktop app)
+#   cb restart         restart the server (after pulling updates) and open it
+#   cb log             follow the server log
+#   cb autostart on    start in the tray at login (so contacts can text you first)
+#   cb autostart off
+set -euo pipefail
+
+DIR="$(cd "$(dirname "$(readlink -f "$0")")/.." && pwd)"
+PORT="${PORT:-3210}"
+URL="http://127.0.0.1:${PORT}"
+LOG="${XDG_CACHE_HOME:-$HOME/.cache}/chatboard.log"
+APP="$HOME/.local/bin/chatboard-desktop"
+AUTOSTART="$HOME/.config/autostart/chatboard.desktop"
+
+running() { curl -fs -o /dev/null --max-time 1 "${URL}/api/status"; }
+
+start() {
+  running && return 0
+  mkdir -p "$(dirname "$LOG")"
+  (cd "$DIR" && PORT="$PORT" nohup node "$DIR/server.js" >>"$LOG" 2>&1 &)
+  for _ in $(seq 1 50); do
+    running && return 0
+    sleep 0.1
+  done
+  echo "Chatboard didn't start. Last lines of $LOG:" >&2
+  tail -n 20 "$LOG" >&2
+  exit 1
+}
+
+stop() {
+  pkill -f "^${APP}" 2>/dev/null || true
+  # matches only this checkout (launched by absolute path), never e.g. SillyTavern's node server.js
+  pkill -f "node ${DIR}/server.js" 2>/dev/null || true
+}
+
+open_browser() { xdg-open "$URL" >/dev/null 2>&1 & disown; }
+
+open_app() {
+  if [[ -x "$APP" ]]; then
+    # the app starts the server itself; a second launch just focuses the window
+    setsid -f "$APP" >/dev/null 2>&1
+  else
+    start && open_browser
+  fi
+}
+
+case "${1:-open}" in
+  open) open_app ;;
+  web) start && open_browser ;;
+  stop) stop && echo "Chatboard stopped" ;;
+  restart) stop; sleep 0.5; open_app ;;
+  log) exec tail -f "$LOG" ;;
+  autostart)
+    case "${2:-}" in
+      on)
+        [[ -x "$APP" ]] || { echo "Install the desktop app first: $DIR/bin/install-desktop" >&2; exit 1; }
+        mkdir -p "$(dirname "$AUTOSTART")"
+        printf '[Desktop Entry]\nType=Application\nName=Chatboard\nExec=%s --hidden\nIcon=chatboard\nX-GNOME-Autostart-enabled=true\n' "$APP" >"$AUTOSTART"
+        echo "Chatboard will start in the tray when you log in" ;;
+      off) rm -f "$AUTOSTART" && echo "Autostart off" ;;
+      *) echo "usage: cb autostart on|off" >&2; exit 2 ;;
+    esac ;;
+  *) echo "usage: cb [web|stop|restart|log|autostart on|off]" >&2; exit 2 ;;
+esac

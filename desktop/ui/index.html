@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Chatboard</title>
+  <style>
+    :root { color-scheme: light dark; }
+    html, body { height: 100%; margin: 0; }
+    body {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 18px;
+      font-family: system-ui, sans-serif;
+      background: #eef1f5;
+      color: #59636e;
+    }
+    @media (prefers-color-scheme: dark) { body { background: #0e1621; color: #7d8b99; } }
+    .logo {
+      width: 72px;
+      height: 72px;
+      border-radius: 20px;
+      background: linear-gradient(140deg, #5aa0ff, #2f5fe0);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      animation: pulse 1.4s ease-in-out infinite;
+    }
+    @keyframes pulse { 50% { transform: scale(0.94); opacity: 0.8; } }
+    #error { display: none; max-width: 460px; text-align: center; line-height: 1.5; }
+    #error code { font-size: 0.9em; }
+  </style>
+</head>
+<body>
+  <div class="logo">
+    <svg width="38" height="38" viewBox="0 0 24 24" fill="#fff"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
+  </div>
+  <div id="status">Starting Chatboard…</div>
+  <div id="error"></div>
+</body>
+</html>
