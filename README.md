@@ -1,6 +1,6 @@
 # Chatboard
 
-Local messenger for local models.
+Local messenger for local models. Text your Ollama models like you'd text friends.
 
 Chatboard is a desktop-style chat app for [Ollama](https://ollama.com). Every contact is a persona with its own model, personality, picture, memory and chat thread, and you can put several of them in a group chat. Nothing leaves your machine except requests to your Ollama server.
 
@@ -16,7 +16,8 @@ Chatboard is a desktop-style chat app for [Ollama](https://ollama.com). Every co
 - Replies keep generating if you reload or close the tab. They show up when you're back.
 - Reply to (quote) messages, emoji reactions (double-click for ❤️), edit, delete, copy.
 - Attach photos, PDFs, Word (.docx), text and code files (drag & drop, paste, or 📎). Document text is extracted and given to the model; photos go to vision models.
-- Search inside a chat, unread badges, pinned and muted chats, drafts per chat, sounds.
+- Search inside a chat (Ctrl+F) and across chats (Ctrl+K), unread badges, pinned and muted chats, drafts per chat, chat export (txt/json), sounds.
+- Type `/` in the composer for commands (`/search`, `/remind`).
 - **Contacts text you first**: check-ins and little updates when it's been quiet (per contact: never / sometimes / often), never during your quiet hours, and never twice in a row without a reply.
 - **Reminders**: "remind me to call mom at 6" and that contact texts you at 6. Manage them from the chat menu.
 - **/search**: `/search weather in Mumbai` and the contact looks it up (DuckDuckGo or your own SearXNG) and answers in their own words, with sources. Pasted links get read too.
